@@ -1,3 +1,4 @@
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum ChessPieceCode {
     Pawn = 1,
     Rook = 2,
@@ -7,9 +8,15 @@ pub enum ChessPieceCode {
     King = 6
 }
 
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum PieceColorCode {
     White = 1,
     Black = 2
+}
+
+pub struct PieceRef {
+    pub piece_type: ChessPieceCode,
+    pub piece_color: PieceColorCode
 }
 
 pub fn get_piece_weight(piece: ChessPieceCode) -> f32 {

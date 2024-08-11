@@ -1,8 +1,7 @@
 mod pieces;
 
-use pieces::PieceColorCode;
-use pieces::ChessPieceCode;
-use pieces::get_piece_weight;
+use pieces::*;
+use std::vec;
 
 /// Set piece_type board and occupation board to their initial state <br>(only called at game init)
 fn init_boards(
@@ -51,7 +50,9 @@ fn update_boards(
     piece_new_coords: (i8, i8),
     piece_type: ChessPieceCode,
     piece_color: PieceColorCode,
-    piece_weight: f32
+    piece_weight: f32,
+    wp_taken_list: &mut Vec<PieceRef>,
+    bp_taken_list: &mut Vec<PieceRef>
 ) {
     let old_x = piece_old_coords.0 as usize;
     let old_y = piece_old_coords.1 as usize;
@@ -59,7 +60,31 @@ fn update_boards(
     let new_y = piece_new_coords.1 as usize;
 
     if pt_board[new_x][new_y] != -1 || o_board[new_x][new_y] != -1 {
-        //TODO: handle piece removal
+        //Get info of the piece that will be removed
+        let rpiece_color: PieceColorCode = match o_board[new_x][new_y] {
+            1 => PieceColorCode::White,
+            2 => PieceColorCode::Black,
+            _ => panic!("invalid state, there should be a piece at i={} j={}", new_x, new_y)
+        };
+
+        let rpiece_type: ChessPieceCode = match pt_board[new_x][new_y] {
+            1 => ChessPieceCode::Pawn,
+            2 => ChessPieceCode::Rook,
+            3 => ChessPieceCode::Knight,
+            4 => ChessPieceCode::Bishop,
+            5 => ChessPieceCode::Queen,
+            6 => ChessPieceCode::King,
+            _ => panic!("invalid state, there should be a piece at i={} j={}", new_x, new_y)
+        };
+
+        //TODO: Game over state if piece type is equal 6
+
+        let piece_ref = PieceRef { piece_type: rpiece_type, piece_color: rpiece_color };
+        if rpiece_color == PieceColorCode::White {
+            wp_taken_list.push(piece_ref);
+        }else {
+            bp_taken_list.push(piece_ref);
+        }
     }
 
     pt_board[old_x][old_y] = -1;
@@ -75,6 +100,9 @@ fn main() {
     let mut occupation_board: [[i8; 8]; 8] = [[0; 8]; 8];
     let mut piece_type_board: [[i8; 8]; 8] = [[0; 8]; 8];
     let mut piece_weight_board: [[f32; 8]; 8] = [[0f32; 8]; 8];
+
+    let mut wp_taken_list: Vec<PieceRef> = vec![];
+    let mut bp_taken_list: Vec<PieceRef> = vec![];
 
     init_boards(&mut piece_type_board, &mut occupation_board, &mut piece_weight_board);
 
