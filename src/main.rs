@@ -1,3 +1,4 @@
+mod bot;
 mod pieces;
 
 use pieces::*;
@@ -20,22 +21,22 @@ fn init_boards(
             let tmp_tuple: (i8, i8) = (i as i8 , j as i8);
 
             pt_board[i][j] = match tmp_tuple {
-                (1 | 6, _) => ChessPieceCode::Pawn as i8,
-                (0 | 7, 0 | 7) => ChessPieceCode::Rook as i8,
-                (0 | 7, 1 | 6) => ChessPieceCode::Knight as i8,
-                (0 | 7, 2 | 5) => ChessPieceCode::Bishop as i8,
-                (0 | 7, 3) => ChessPieceCode::Queen as i8,
-                (0 | 7, 4) => ChessPieceCode::King as i8,
+                (1 | 6, _) => PieceTypeCode::Pawn as i8,
+                (0 | 7, 0 | 7) => PieceTypeCode::Rook as i8,
+                (0 | 7, 1 | 6) => PieceTypeCode::Knight as i8,
+                (0 | 7, 2 | 5) => PieceTypeCode::Bishop as i8,
+                (0 | 7, 3) => PieceTypeCode::Queen as i8,
+                (0 | 7, 4) => PieceTypeCode::King as i8,
                 _ => -1
             };
 
             w_board[i][j] = match tmp_tuple {
-                (1 | 6, _) => get_piece_weight(ChessPieceCode::Pawn),
-                (0 | 7, 0 | 7) => get_piece_weight(ChessPieceCode::Rook),
-                (0 | 7, 1 | 6) => get_piece_weight(ChessPieceCode::Knight),
-                (0 | 7, 2 | 5) => get_piece_weight(ChessPieceCode::Bishop),
-                (0 | 7, 3) => get_piece_weight(ChessPieceCode::Queen),
-                (0 | 7, 4) => get_piece_weight(ChessPieceCode::King),
+                (1 | 6, _) => get_piece_weight(PieceTypeCode::Pawn),
+                (0 | 7, 0 | 7) => get_piece_weight(PieceTypeCode::Rook),
+                (0 | 7, 1 | 6) => get_piece_weight(PieceTypeCode::Knight),
+                (0 | 7, 2 | 5) => get_piece_weight(PieceTypeCode::Bishop),
+                (0 | 7, 3) => get_piece_weight(PieceTypeCode::Queen),
+                (0 | 7, 4) => get_piece_weight(PieceTypeCode::King),
                 _ => 0f32
             }
         }
@@ -48,7 +49,7 @@ fn update_boards(
     w_board: &mut [[f32; 8]; 8],
     piece_old_coords: (i8, i8),
     piece_new_coords: (i8, i8),
-    piece_type: ChessPieceCode,
+    piece_type: PieceTypeCode,
     piece_color: PieceColorCode,
     piece_weight: f32,
     wp_taken_list: &mut Vec<PieceRef>,
@@ -67,13 +68,13 @@ fn update_boards(
             _ => panic!("invalid state, there should be a piece at i={} j={}", new_x, new_y)
         };
 
-        let rpiece_type: ChessPieceCode = match pt_board[new_x][new_y] {
-            1 => ChessPieceCode::Pawn,
-            2 => ChessPieceCode::Rook,
-            3 => ChessPieceCode::Knight,
-            4 => ChessPieceCode::Bishop,
-            5 => ChessPieceCode::Queen,
-            6 => ChessPieceCode::King,
+        let rpiece_type: PieceTypeCode = match pt_board[new_x][new_y] {
+            1 => PieceTypeCode::Pawn,
+            2 => PieceTypeCode::Rook,
+            3 => PieceTypeCode::Knight,
+            4 => PieceTypeCode::Bishop,
+            5 => PieceTypeCode::Queen,
+            6 => PieceTypeCode::King,
             _ => panic!("invalid state, there should be a piece at i={} j={}", new_x, new_y)
         };
 
