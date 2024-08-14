@@ -22,11 +22,15 @@ pub fn build_weight_board(pt_board: &mut [[i8; 8]; 8]) -> [[f32; 8]; 8] {
     board
 }
 
-pub fn is_square_available(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool{
-    occupation_board[coord.i][coord.j] == -1
+pub fn is_square_available(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
+    if !is_coordinate_oob(PieceCoordinates::new(coord.i, coord.j)) {
+        occupation_board[coord.i][coord.j] == -1
+    } else {
+        false
+    }
 }
 
-pub fn is_piece_mine(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool{
+pub fn is_piece_mine(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
     let val: PieceColorCode = match occupation_board[coord.i][coord.j] {
         1 => PieceColorCode::White,
         2 => PieceColorCode::Black,
@@ -56,16 +60,16 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
             let mut check_up = true;
             let mut check_down = true;
 
-            let j_left = piece_coords.j - 1;
+            let mut j_left = piece_coords.j - 1;
             check_left = is_coordinate_oob(PieceCoordinates::new(0, j_left));
 
-            let j_right = piece_coords.j + 1;
+            let mut j_right = piece_coords.j + 1;
             check_right = is_coordinate_oob(PieceCoordinates::new(0, j_right));
 
-            let i_up = piece_coords.i - 1;
+            let mut i_up = piece_coords.i - 1;
             check_up = is_coordinate_oob(PieceCoordinates::new(i_up, 0));
 
-            let i_down = piece_coords.i + 1;
+            let mut i_down = piece_coords.i + 1;
             check_down = is_coordinate_oob(PieceCoordinates::new(i_down, 0));
 
             //circular search for available squares
@@ -74,7 +78,88 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
                     break;
                 }
 
-                //TODO: finish rook logic
+                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_left)) &&
+                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_left)) {
+
+                    available_moves.push(PieceCoordinates::new(piece_coords.i, j_left));
+                    j_left -= 1;
+                }else {
+                    check_left = false;
+                }
+
+                if !is_coordinate_oob(PieceCoordinates::new(i_up, piece_coords.j)) &&
+                    is_square_available(occupation_board, PieceCoordinates::new(i_up, piece_coords.j)) {
+
+                    available_moves.push(PieceCoordinates::new(i_up, piece_coords.j));
+                    i_up -= 1;
+                }else {
+                    check_up = false;
+                }
+
+                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_right)) &&
+                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_right)) {
+
+                    available_moves.push(PieceCoordinates::new(piece_coords.i, j_right));
+                    j_right += 1;
+                }else {
+                    check_right = false;
+                }
+
+                if !is_coordinate_oob(PieceCoordinates::new(i_down, piece_coords.j)) &&
+                    is_square_available(occupation_board, PieceCoordinates::new(i_down, piece_coords.j)) {
+
+                    available_moves.push(PieceCoordinates::new(i_down, piece_coords.j));
+                    i_down += 1;
+                }else {
+                    check_down = false;
+                }
+            }
+        },
+        PieceTypeCode::Knight => {
+            let mut upper_i: i8 = 0;
+            let mut lower_i: i8 = 0;
+            let mut j: i8 = 0;
+
+            j = piece_coords.j - 2;
+            upper_i = piece_coords.i - 1;
+            lower_i = piece_coords.i + 1;
+
+            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+                available_moves.push(PieceCoordinates::new(upper_i, j));
+            }
+            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+                available_moves.push(PieceCoordinates::new(lower_i, j));
+            }
+
+            j += 1;
+            upper_i -= 1;
+            lower_i += 1;
+
+            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+                available_moves.push(PieceCoordinates::new(upper_i, j));
+            }
+            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+                available_moves.push(PieceCoordinates::new(lower_i, j));
+            }
+
+            j = piece_coords.j + 1;
+
+            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+                available_moves.push(PieceCoordinates::new(upper_i, j));
+            }
+            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+                available_moves.push(PieceCoordinates::new(lower_i, j));
+            }
+
+            j += 1;
+            upper_i += 1;
+            lower_i -= 1;
+
+            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+                available_moves.push(PieceCoordinates::new(upper_i, j));
+            }
+            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+                available_moves.push(PieceCoordinates::new(lower_i, j));
             }
         }
     }
