@@ -21,6 +21,7 @@ pub struct PieceRef {
     pub piece_color: PieceColorCode
 }
 
+#[derive(Clone)]
 pub struct PieceCoordinates {
     pub i: i8,
     pub j: i8

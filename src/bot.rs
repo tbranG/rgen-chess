@@ -1,8 +1,6 @@
 use crate::pieces::{get_piece_weight, PieceColorCode, PieceCoordinates, PieceTypeCode};
 
-pub fn build_weight_board(pt_board: &mut [[i8; 8]; 8]) -> [[f32; 8]; 8] {
-    let mut board: [[f32; 8]; 8] = [[0f32; 8]; 8];
-
+pub fn build_weight_board(pt_board: &[[i8; 8]; 8], w_board: &mut [[f32; 8]; 8]) {
     for i in 0..8 {
         for j in 0..8 {
             let piece_type = match pt_board[i][j] {
@@ -15,23 +13,21 @@ pub fn build_weight_board(pt_board: &mut [[i8; 8]; 8]) -> [[f32; 8]; 8] {
                 _ => PieceTypeCode::Nil
             };
 
-            board[i][j] = get_piece_weight(piece_type);
+            w_board[i][j] = get_piece_weight(piece_type);
         }
     };
-
-    board
 }
 
-pub fn is_square_available(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
+fn is_square_available(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
     if !is_coordinate_oob(PieceCoordinates::new(coord.i, coord.j)) {
-        occupation_board[coord.i][coord.j] == -1
+        occupation_board[coord.i as usize][coord.j as usize] == -1
     } else {
         false
     }
 }
 
-pub fn is_piece_mine(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
-    let val: PieceColorCode = match occupation_board[coord.i][coord.j] {
+fn is_piece_mine(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
+    let val: PieceColorCode = match occupation_board[coord.i as usize][coord.j as usize] {
         1 => PieceColorCode::White,
         2 => PieceColorCode::Black,
         _ => PieceColorCode::Nil
@@ -40,8 +36,14 @@ pub fn is_piece_mine(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -
     val == PieceColorCode::Black
 }
 
-pub fn is_coordinate_oob(coord: PieceCoordinates) -> bool {
+fn is_coordinate_oob(coord: PieceCoordinates) -> bool {
     coord.i < 0 || coord.i > 7 || coord.j < 0 || coord.j > 7
+}
+
+fn can_capture(occupation_board: &[[i8; 8]; 8], coord: PieceCoordinates) -> bool {
+    !is_coordinate_oob(coord.clone()) &&
+    !is_square_available(occupation_board, coord.clone()) &&
+    !is_piece_mine(occupation_board, coord.clone())
 }
 
 //TODO: include piece capturing to available movements
@@ -50,8 +52,16 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
 
     match piece {
         PieceTypeCode::Pawn => {
-            if is_square_available(occupation_board, PieceTypeCode::new(piece_coords.i - 1, piece_coords.j)) {
-                available_moves.push(PieceCoordinates::new(piece_coords.i - 1, piece_coords.j))
+            if is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i + 1, piece_coords.j)) {
+                available_moves.push(PieceCoordinates::new(piece_coords.i + 1, piece_coords.j))
+            }
+
+            //checking lower diagonals
+            if can_capture(occupation_board, PieceCoordinates::new(piece_coords.i + 1, piece_coords.j - 1))  {
+                available_moves.push(PieceCoordinates::new(piece_coords.i + 1, piece_coords.j - 1))
+            }
+            if can_capture(occupation_board, PieceCoordinates::new(piece_coords.i + 1, piece_coords.j + 1))  {
+                available_moves.push(PieceCoordinates::new(piece_coords.i + 1, piece_coords.j + 1))
             }
         },
         PieceTypeCode::Rook => {
@@ -61,16 +71,9 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
             let mut check_down = true;
 
             let mut j_left = piece_coords.j - 1;
-            check_left = is_coordinate_oob(PieceCoordinates::new(0, j_left));
-
             let mut j_right = piece_coords.j + 1;
-            check_right = is_coordinate_oob(PieceCoordinates::new(0, j_right));
-
             let mut i_up = piece_coords.i - 1;
-            check_up = is_coordinate_oob(PieceCoordinates::new(i_up, 0));
-
             let mut i_down = piece_coords.i + 1;
-            check_down = is_coordinate_oob(PieceCoordinates::new(i_down, 0));
 
             //circular search for available squares
             loop {
@@ -78,8 +81,10 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
                     break;
                 }
 
-                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_left)) &&
-                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_left)) {
+                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_left)) && (
+                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_left)) ||
+                    can_capture(occupation_board, PieceCoordinates::new(piece_coords.i, j_left))
+                    ) {
 
                     available_moves.push(PieceCoordinates::new(piece_coords.i, j_left));
                     j_left -= 1;
@@ -87,8 +92,10 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
                     check_left = false;
                 }
 
-                if !is_coordinate_oob(PieceCoordinates::new(i_up, piece_coords.j)) &&
-                    is_square_available(occupation_board, PieceCoordinates::new(i_up, piece_coords.j)) {
+                if !is_coordinate_oob(PieceCoordinates::new(i_up, piece_coords.j)) && (
+                    is_square_available(occupation_board, PieceCoordinates::new(i_up, piece_coords.j)) ||
+                    can_capture(occupation_board, PieceCoordinates::new(i_up, piece_coords.j))
+                    ) {
 
                     available_moves.push(PieceCoordinates::new(i_up, piece_coords.j));
                     i_up -= 1;
@@ -96,8 +103,10 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
                     check_up = false;
                 }
 
-                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_right)) &&
-                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_right)) {
+                if !is_coordinate_oob(PieceCoordinates::new(piece_coords.i, j_right)) && (
+                    is_square_available(occupation_board, PieceCoordinates::new(piece_coords.i, j_right)) ||
+                    can_capture(occupation_board, PieceCoordinates::new(piece_coords.i, j_right))
+                    ) {
 
                     available_moves.push(PieceCoordinates::new(piece_coords.i, j_right));
                     j_right += 1;
@@ -105,8 +114,10 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
                     check_right = false;
                 }
 
-                if !is_coordinate_oob(PieceCoordinates::new(i_down, piece_coords.j)) &&
-                    is_square_available(occupation_board, PieceCoordinates::new(i_down, piece_coords.j)) {
+                if !is_coordinate_oob(PieceCoordinates::new(i_down, piece_coords.j)) && (
+                    is_square_available(occupation_board, PieceCoordinates::new(i_down, piece_coords.j)) ||
+                    can_capture(occupation_board, PieceCoordinates::new(i_down, piece_coords.j))
+                    ) {
 
                     available_moves.push(PieceCoordinates::new(i_down, piece_coords.j));
                     i_down += 1;
@@ -124,10 +135,12 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
             upper_i = piece_coords.i - 1;
             lower_i = piece_coords.i + 1;
 
-            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(upper_i, j)) {
                 available_moves.push(PieceCoordinates::new(upper_i, j));
             }
-            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(lower_i, j)) {
                 available_moves.push(PieceCoordinates::new(lower_i, j));
             }
 
@@ -135,19 +148,23 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
             upper_i -= 1;
             lower_i += 1;
 
-            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(upper_i, j)) {
                 available_moves.push(PieceCoordinates::new(upper_i, j));
             }
-            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(lower_i, j)) {
                 available_moves.push(PieceCoordinates::new(lower_i, j));
             }
 
             j = piece_coords.j + 1;
 
-            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(upper_i, j)) {
                 available_moves.push(PieceCoordinates::new(upper_i, j));
             }
-            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(lower_i, j)) {
                 available_moves.push(PieceCoordinates::new(lower_i, j));
             }
 
@@ -155,13 +172,35 @@ pub fn get_piece_available_movements(piece: PieceTypeCode, piece_coords: PieceCo
             upper_i += 1;
             lower_i -= 1;
 
-            if is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(upper_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(upper_i, j)) {
                 available_moves.push(PieceCoordinates::new(upper_i, j));
             }
-            if is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)){
+            if  is_square_available(occupation_board, PieceCoordinates::new(lower_i, j)) ||
+                can_capture(occupation_board, PieceCoordinates::new(lower_i, j)) {
                 available_moves.push(PieceCoordinates::new(lower_i, j));
             }
         }
+        PieceTypeCode::Bishop => {
+            let mut check_fq = true;
+            let mut check_sq = true;
+            let mut check_tq = true;
+            let mut check_fq = true;
+
+            let mut fq_coords: PieceCoordinates = PieceCoordinates::new(piece_coords.i - 1, piece_coords.j + 1);
+            let mut sq_coords: PieceCoordinates = PieceCoordinates::new(piece_coords.i - 1, piece_coords.j - 1);
+            let mut tq_coords: PieceCoordinates = PieceCoordinates::new(piece_coords.i + 1, piece_coords.j - 1);
+            let mut fq_coords: PieceCoordinates = PieceCoordinates::new(piece_coords.i + 1, piece_coords.j + 1);
+
+            loop {
+                if !check_fq && !check_sq && !check_tq && !check_fq {
+                    break;
+                }
+
+
+            }
+        }
+        _ => panic!("Tried to calculate a set of movements for a piece of type: Unknown")
     }
 
     available_moves
