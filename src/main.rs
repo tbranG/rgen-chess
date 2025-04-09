@@ -3,9 +3,8 @@ mod pieces;
 mod parser;
 
 use std::io::BufRead;
-use crate::bot::{build_weight_board, get_piece_available_movements};
+use crate::bot::{build_weight_board, calculate_best_movement};
 use crate::parser::read_board;
-use crate::pieces::{PieceCoordinates, PieceTypeCode};
 
 //REMEMBER: AI will always play for the black pieces
 fn main() {
@@ -28,12 +27,8 @@ fn main() {
     let mut piece_weight_board: [[f32; 8]; 8] = [[0f32; 8]; 8];
     build_weight_board(&piece_type_board, &mut piece_weight_board);
 
-    let first_black_pawn = PieceCoordinates::new(1, 0);
+    let selected_movement = calculate_best_movement(&occupation_board, &piece_type_board, &piece_weight_board);
 
-    let available_moves = get_piece_available_movements(PieceTypeCode::Pawn, first_black_pawn, &occupation_board);
-
-    print!("Number of moves: {:?}\n", available_moves.len());
     println!("Move:");
-    println!("i={:?}", available_moves.get(0).unwrap().i);
-    println!("j={:?}", available_moves.get(0).unwrap().j);
+    println!("{:?}", selected_movement);
 }

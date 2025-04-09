@@ -1,4 +1,5 @@
 use regex::Regex;
+use crate::pieces::{PieceCoordinates, PieceTypeCode};
 
 fn preprocess_string(input: &str) -> bool {
     let reg = Regex::new(r"\[(\[([0-9],?){8}\],?){8}\]");
@@ -40,4 +41,33 @@ pub fn read_board(input: &String, board: &mut [[i8; 8]; 8]) {
             _ => tmp_num.push(c)
         }
     }
+}
+
+pub fn translate_move_to_notation(piece_coordinates: PieceCoordinates, piece_type: PieceTypeCode) -> String {
+    let row= char::from(((8 - piece_coordinates.i) + 48) as u8);
+    let col = match piece_coordinates.j {
+        0 => 'a',
+        1 => 'b',
+        2 => 'c',
+        3 => 'd',
+        4 => 'e',
+        5 => 'f',
+        6 => 'g',
+        7 => 'h',
+        _ => panic!("Unexpected piece coordinate j")
+    };
+
+    let ptype = match piece_type {
+        PieceTypeCode::Pawn => ' ',
+        PieceTypeCode::Knight => 'N',
+        PieceTypeCode::Bishop => 'B',
+        PieceTypeCode::Queen => 'Q',
+        PieceTypeCode::King => 'K',
+        _ => panic!("Unexpected piece type code")
+    };
+
+    let char_vec = vec![ptype, col, row];
+    let movement = char_vec.iter().collect();
+
+    movement
 }

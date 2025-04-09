@@ -35,11 +35,11 @@ impl PieceCoordinates {
 
 pub fn get_piece_weight(piece: PieceTypeCode) -> f32 {
     match piece {
-        PieceTypeCode::Pawn => 0.5,
+        PieceTypeCode::Pawn => 1.5f32,
         PieceTypeCode::Rook => 4f32,
-        PieceTypeCode::Knight => 1.5,
+        PieceTypeCode::Knight => 2f32,
         PieceTypeCode::Bishop => 4f32,
-        PieceTypeCode::Queen => 7f32,
+        PieceTypeCode::Queen => 8f32,
         PieceTypeCode::King => 10f32,
         PieceTypeCode::Nil => 0f32
     }
